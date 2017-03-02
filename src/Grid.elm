@@ -1,5 +1,5 @@
 module Grid exposing
-  (Grid, rows, neighbors, at, Address)
+  (Grid, rows, neighbors, at, Address, blinker)
 
 import List exposing (take, drop, indexedMap, head, filterMap, map, concatMap, filter, length)
 import Debug exposing (log)
@@ -39,3 +39,9 @@ neighborAddresses i grid =
     cols = [cell.col - 1, cell.col, cell.col + 1]
   in
     filter (\address -> not <| address == cell) <| concatMap (\row -> (map (\col -> (Address row col)) cols)) rows
+
+blinker = (Grid 5 ((List.repeat 7 False)
+                    ++ [True] ++ (List.repeat 4 False)
+                    ++ [True] ++ (List.repeat 4 False)
+                    ++ [True]
+                    ++ (List.repeat 7 False)))

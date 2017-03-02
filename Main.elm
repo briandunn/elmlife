@@ -5,11 +5,9 @@ import Grid exposing (..)
 
 type Msg = Tick Time
 
-subscriptions model = every (500 * millisecond) Tick
+subscriptions model = every (250 * millisecond) Tick
 
-init = ({cells = [True, False, True
-                , True, False, True
-                , True, False, True], width = 3}, Cmd.none)
+init = (blinker, Cmd.none)
 
 view model =
   table [] (List.map (\row ->
@@ -18,9 +16,9 @@ view model =
     )
   ) (rows model))
 
--- next alive liveNeighborCount = (alive && liveNeighborCount == 2) || (liveNeighborCount == 3)
+nextCell alive liveNeighborCount = (alive && liveNeighborCount == 2) || (liveNeighborCount == 3)
 
-next grid = {grid | cells = (neighbors grid)}
+next grid = {grid | cells = List.map (\(cell, neighbors) -> nextCell cell (List.length (List.filter identity neighbors)) ) (neighbors grid)}
 
 update msg model =
   (case msg of
