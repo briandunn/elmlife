@@ -1,18 +1,20 @@
 import Html exposing (Html, table, tr, td, text)
+import Html.Attributes exposing (classList)
 import Time exposing (Time, millisecond, every)
 import Grid exposing (..)
+import Random
 
 
-type Msg = Tick Time
+type Msg = Tick Time | RandomCells (List Bool)
 
-subscriptions model = every (250 * millisecond) Tick
+subscriptions model = every (200 * millisecond) Tick
 
-init = (blinker, Cmd.none)
+init = ((Grid 0 []),(Random.generate RandomCells (Random.list (30 ^ 2) Random.bool)))
 
 view model =
   table [] (List.map (\row ->
     tr [] (List.map (\cell ->
-      td [] [text (toString cell)]) row
+      td [classList [("live", cell)]] []) row
     )
   ) (rows model))
 
@@ -21,8 +23,9 @@ nextCell alive liveNeighborCount = (alive && liveNeighborCount == 2) || (liveNei
 next grid = {grid | cells = List.map (\(cell, neighbors) -> nextCell cell (List.length (List.filter identity neighbors)) ) (neighbors grid)}
 
 update msg model =
-  (case msg of
-    Tick time -> next model, Cmd.none)
+    case msg of
+        Tick time -> (next model, Cmd.none)
+        RandomCells cells -> ((Grid 30 cells), Cmd.none)
 
 main =
   Html.program
