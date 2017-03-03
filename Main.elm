@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Html exposing (Html, table, tr, td, text, aside, button, main_, input, label, li, ul)
 import Html.Attributes exposing (classList, type_)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onMouseDown)
 import Time exposing (Time, millisecond, every)
 import Grid exposing (..)
 import Random
@@ -18,6 +18,7 @@ type Msg
     | TogglePlay
     | Randomize
     | Speed String
+    | CellClick Int
 
 
 subscriptions : Model -> Sub Msg
@@ -58,12 +59,16 @@ view model =
                 ]
             ]
         , table []
-            (List.map
-                (\row ->
+            (List.indexedMap
+                (\y row ->
                     tr []
-                        (List.map
-                            (\cell ->
-                                td [ classList [ ( "live", cell ) ] ] []
+                        (List.indexedMap
+                            (\x cell ->
+                                td
+                                    [ classList [ ( "live", cell ) ]
+                                    , onMouseDown (CellClick (y * model.grid.width + x))
+                                    ]
+                                    []
                             )
                             row
                         )
@@ -99,6 +104,9 @@ update msg model =
 
         Randomize ->
             ( model, randomize )
+
+        CellClick i ->
+            ( { model | grid = (Grid.update i not model.grid) }, Cmd.none )
 
         Speed value ->
             case String.toInt (value) of

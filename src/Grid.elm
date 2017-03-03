@@ -1,7 +1,6 @@
-module Grid exposing (Grid, rows, neighbors, at, Address, blinker, empty)
+module Grid exposing (Grid, rows, neighbors, at, Address, empty, update)
 
 import List exposing (take, drop, indexedMap, head, filterMap, map, concatMap, filter, length)
-import Debug exposing (log)
 
 
 type alias Grid a =
@@ -78,14 +77,10 @@ empty =
     Grid 0 []
 
 
-blinker =
-    (Grid 5
-        ((List.repeat 7 False)
-            ++ [ True ]
-            ++ (List.repeat 4 False)
-            ++ [ True ]
-            ++ (List.repeat 4 False)
-            ++ [ True ]
-            ++ (List.repeat 7 False)
-        )
-    )
+update : Int -> (a -> a) -> Grid a -> Grid a
+update i f grid =
+    let
+        rest =
+            (drop i grid.cells)
+    in
+        { grid | cells = (take i grid.cells) ++ (map f (filterMap head [ rest ])) ++ (drop 1 rest) }
