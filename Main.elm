@@ -31,7 +31,7 @@ randomize =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { play = True, grid = (Grid 0 []), speed = 50 }, randomize )
+    ( { play = True, grid = (Grid.empty), speed = 50 }, randomize )
 
 
 view model =
