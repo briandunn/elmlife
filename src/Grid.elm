@@ -1,6 +1,6 @@
-module Grid exposing (Grid, rows, neighbors, at, Address, empty, update)
+module Grid exposing (Grid, rows, neighbors, at, Address, empty, update, fill)
 
-import List exposing (take, drop, indexedMap, head, filterMap, map, concatMap, filter, length)
+import List exposing (take, drop, indexedMap, head, filterMap, map, concatMap, filter, length, repeat)
 
 
 type alias Grid a =
@@ -75,6 +75,11 @@ neighborAddresses i grid =
 empty : Grid a
 empty =
     Grid 0 []
+
+
+fill : a -> Grid a -> Grid a
+fill a grid =
+    Grid grid.width (repeat (length grid.cells) a)
 
 
 update : Int -> (a -> a) -> Grid a -> Grid a

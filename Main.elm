@@ -19,6 +19,7 @@ type Msg
     | Randomize
     | Speed String
     | CellClick Int
+    | Clear
 
 
 subscriptions : Model -> Sub Msg
@@ -51,6 +52,10 @@ view model =
                 , li []
                     [ button [ onClick Randomize ]
                         [ text "rand" ]
+                    ]
+                , li []
+                    [ button [ onClick Clear ]
+                        [ text "clear" ]
                     ]
                 , li []
                     [ label []
@@ -107,6 +112,9 @@ update msg model =
 
         CellClick i ->
             ( { model | grid = (Grid.update i not model.grid) }, Cmd.none )
+
+        Clear ->
+            ( { model | grid = Grid.fill False model.grid }, Cmd.none )
 
         Speed value ->
             case String.toInt (value) of
