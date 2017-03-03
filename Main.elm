@@ -111,7 +111,7 @@ update msg model =
             ( model, randomize )
 
         CellClick i ->
-            ( { model | grid = (Grid.update i not model.grid) }, Cmd.none )
+            ( { model | grid = (Grid.update i not model.grid), play = False }, Cmd.none )
 
         Clear ->
             ( { model | grid = Grid.fill False model.grid }, Cmd.none )
