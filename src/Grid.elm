@@ -1,4 +1,4 @@
-module Grid exposing (Grid, rows, neighbors, at, Address, empty, update, fill)
+module Grid exposing (Grid, rows, neighbors, at, Address, empty, update, fill, height, cellCount, square, new)
 
 import List exposing (take, drop, indexedMap, head, filterMap, map, concatMap, filter, length, repeat)
 
@@ -9,6 +9,21 @@ type alias Grid a =
 
 type alias Address =
     { row : Int, col : Int }
+
+
+cellCount : Grid a -> Int
+cellCount grid =
+    length grid.cells
+
+
+square : List a -> Grid a
+square cells =
+    Grid (round ((toFloat (length cells)) ^ 0.5)) cells
+
+
+new : Int -> a -> Grid a
+new i value =
+    Grid i (repeat (i ^ 2) value)
 
 
 rows : Grid a -> List (List a)
@@ -46,7 +61,10 @@ at address grid =
 
 height : Grid a -> Int
 height grid =
-    (length grid.cells) // grid.width
+    if grid.width > 0 then
+        (length grid.cells) // grid.width
+    else
+        0
 
 
 cellNeighbors i grid =
@@ -54,7 +72,10 @@ cellNeighbors i grid =
 
 
 toAddress i grid =
-    Address (i // grid.width) (i % grid.width)
+    if grid.width > 0 then
+        Address (i // grid.width) (i % grid.width)
+    else
+        Address 0 0
 
 
 neighborAddresses : Int -> Grid a -> List Address

@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (Html, table, tr, td, text, aside, button, main_, input, label, li, ul)
-import Html.Attributes exposing (classList, type_)
+import Html.Attributes as Attr exposing (classList, type_, step, value)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import Time exposing (Time, millisecond, every)
 import Grid exposing (..)
@@ -18,22 +18,27 @@ type Msg
     | TogglePlay
     | Randomize
     | Speed String
+    | Size String
     | CellClick Int
     | Clear
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    every (toFloat ((101 - model.speed) * 10) * millisecond) Tick
+    every ((toFloat (1000 - model.speed)) * millisecond) Tick
 
 
-randomize =
-    Random.generate RandomCells (Random.list (30 ^ 2) Random.bool)
+randomize grid =
+    Random.generate RandomCells (Random.list (Grid.cellCount grid) Random.bool)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { play = True, grid = (Grid.empty), speed = 50 }, randomize )
+    let
+        grid =
+            Grid.new 30 False
+    in
+        ( { play = True, grid = grid, speed = 500 }, (randomize grid) )
 
 
 view model =
@@ -59,7 +64,30 @@ view model =
                     ]
                 , li []
                     [ label []
-                        [ input [ type_ "range", onInput Speed ] [], text "speed" ]
+                        [ input
+                            [ type_ "range"
+                            , onInput Speed
+                            , Attr.min "0"
+                            , Attr.max "1000"
+                            , step "100"
+                            , value (toString model.speed)
+                            ]
+                            []
+                        , text "speed"
+                        ]
+                    ]
+                , li []
+                    [ label []
+                        [ input
+                            [ type_ "range"
+                            , onInput Size
+                            , Attr.min "3"
+                            , Attr.max "50"
+                            , value (toString (Grid.height model.grid))
+                            ]
+                            []
+                        , text "size"
+                        ]
                     ]
                 ]
             ]
@@ -83,46 +111,60 @@ view model =
         ]
 
 
+nextCell : Bool -> Int -> Bool
 nextCell alive liveNeighborCount =
     (alive && liveNeighborCount == 2) || (liveNeighborCount == 3)
 
 
-next grid =
+nextGrid : Grid Bool -> Grid Bool
+nextGrid grid =
     { grid | cells = List.map (\( cell, neighbors ) -> nextCell cell (List.length (List.filter identity neighbors))) (neighbors grid) }
 
 
 update msg model =
-    case msg of
-        Tick time ->
-            ( if model.play then
-                { model | grid = (next model.grid) }
-              else
-                model
-            , Cmd.none
-            )
+    let
+        stringToInt =
+            updateFromIntString model
+    in
+        case msg of
+            Tick time ->
+                ( if model.play then
+                    { model | grid = (nextGrid model.grid) }
+                  else
+                    model
+                , Cmd.none
+                )
 
-        RandomCells cells ->
-            ( { model | grid = (Grid 30 cells) }, Cmd.none )
+            RandomCells cells ->
+                ( { model | grid = Grid.square cells }, Cmd.none )
 
-        TogglePlay ->
-            ( { model | play = not model.play }, Cmd.none )
+            TogglePlay ->
+                ( { model | play = not model.play }, Cmd.none )
 
-        Randomize ->
-            ( model, randomize )
+            Randomize ->
+                ( model, (randomize model.grid) )
 
-        CellClick i ->
-            ( { model | grid = (Grid.update i not model.grid), play = False }, Cmd.none )
+            CellClick i ->
+                ( { model | grid = (Grid.update i not model.grid), play = False }, Cmd.none )
 
-        Clear ->
-            ( { model | grid = Grid.fill False model.grid }, Cmd.none )
+            Clear ->
+                ( { model | grid = Grid.fill False model.grid }, Cmd.none )
 
-        Speed value ->
-            case String.toInt (value) of
-                Ok int ->
-                    ( { model | speed = int }, Cmd.none )
+            Speed value ->
+                stringToInt value (\int -> { model | speed = int })
 
-                Err _ ->
-                    ( model, Cmd.none )
+            Size value ->
+                stringToInt value (\int -> { model | grid = Grid.new int False })
+
+
+updateFromIntString : Model -> String -> (Int -> Model) -> ( Model, Cmd Msg )
+updateFromIntString model value f =
+    case String.toInt value of
+        Ok int ->
+            ( (f int), Cmd.none )
+
+        Err _ ->
+            ( model, Cmd.none )
 
 
 main =
