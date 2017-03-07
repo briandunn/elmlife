@@ -83,7 +83,7 @@ view model =
                             , onInput Size
                             , Attr.min "3"
                             , Attr.max "50"
-                            , value (toString (Grid.height model.grid))
+                            , value (toString (Grid.width model.grid))
                             ]
                             []
                         , text "size"
@@ -154,7 +154,7 @@ update msg model =
                 stringToInt value (\int -> { model | speed = int })
 
             Size value ->
-                stringToInt value (\int -> { model | grid = Grid.new int False })
+                stringToInt value (\int -> { model | grid = Grid.resize int False model.grid })
 
 
 updateFromIntString : Model -> String -> (Int -> Model) -> ( Model, Cmd Msg )
