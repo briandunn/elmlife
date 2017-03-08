@@ -1,15 +1,20 @@
-module Grid exposing (Grid, rows, neighbors, at, Address, empty, update, fill, height, cellCount, square, new, resize, width)
+module Grid exposing (Grid, rows, neighbors, at, Address, empty, update, fill, height, cellCount, square, new, resize, width, map)
 
-import List exposing (take, drop, indexedMap, head, filterMap, map, map2, concatMap, filter, length, repeat, foldl)
-import Debug
+import Array exposing (Array, toList, fromList, get)
+import List exposing (take, drop, indexedMap, filterMap, concatMap, filter, length, foldl)
 
 
 type alias Grid a =
-    { width : Int, cells : List a }
+    { width : Int, cells : Array a }
 
 
 type alias Address =
     { row : Int, col : Int }
+
+
+map : (a -> a) -> Grid a -> Grid a
+map f grid =
+    { grid | cells = Array.map f grid.cells }
 
 
 width : Grid a -> Int
@@ -19,17 +24,17 @@ width grid =
 
 cellCount : Grid a -> Int
 cellCount grid =
-    length grid.cells
+    Array.length grid.cells
 
 
 square : List a -> Grid a
 square cells =
-    Grid (round ((toFloat (length cells)) ^ 0.5)) cells
+    Grid (round ((toFloat (length cells)) ^ 0.5)) <| fromList cells
 
 
 new : Int -> a -> Grid a
 new i value =
-    Grid i (repeat (i ^ 2) value)
+    Grid i (Array.repeat (i ^ 2) value)
 
 
 applyOffset : Int -> Address -> Address
@@ -45,6 +50,7 @@ resize width default grid =
 
         addresses =
             grid.cells
+                |> toList
                 |> indexedMap (\i cell -> ( cell, offset <| toAddress i grid ))
                 |> filter
                     (\( cell, address ) ->
@@ -56,7 +62,7 @@ resize width default grid =
 
 rows : Grid a -> List (List a)
 rows grid =
-    groupsOf grid.width grid.cells
+    groupsOf grid.width <| toList grid.cells
 
 
 groupsOf size list =
@@ -74,7 +80,7 @@ groupsOf size list =
 
 neighbors : Grid a -> List ( a, List a )
 neighbors grid =
-    indexedMap (\i cell -> ( cell, (cellNeighbors i grid) )) grid.cells
+    indexedMap (\i cell -> ( cell, (cellNeighbors i grid) )) <| toList grid.cells
 
 
 at : Address -> Grid a -> Maybe a
@@ -84,13 +90,13 @@ at address grid =
     else if address.row > ((height grid) - 1) || address.row < 0 then
         Nothing
     else
-        head <| drop ((grid.width * address.row) + address.col) grid.cells
+        get ((grid.width * address.row) + address.col) grid.cells
 
 
 height : Grid a -> Int
 height grid =
     if grid.width > 0 then
-        (length grid.cells) // grid.width
+        (Array.length grid.cells) // grid.width
     else
         0
 
@@ -124,31 +130,29 @@ neighborAddresses i grid =
         cols =
             [ cell.col - 1, cell.col, cell.col + 1 ]
     in
-        filter (\address -> not <| address == cell) <| concatMap (\row -> (map (\col -> (Address row col)) cols)) rows
+        filter (\address -> not <| address == cell) <| concatMap (\row -> (List.map (\col -> (Address row col)) cols)) rows
 
 
 empty : Grid a
 empty =
-    Grid 0 []
+    Grid 0 <| fromList []
 
 
 fill : a -> Grid a -> Grid a
 fill a grid =
-    Grid grid.width (repeat (length grid.cells) a)
+    Grid grid.width (Array.repeat (Array.length grid.cells) a)
 
 
 set : Address -> a -> Grid a -> Grid a
 set address value grid =
-    update (fromAddress address grid) (\_ -> value) grid
+    { grid | cells = Array.set (fromAddress address grid) value grid.cells }
 
 
 update : Int -> (a -> a) -> Grid a -> Grid a
 update i f grid =
-    if i < 0 || i > ((length grid.cells) - 1) then
-        grid
-    else
-        let
-            rest =
-                (drop i grid.cells)
-        in
-            { grid | cells = (take i grid.cells) ++ (map f (filterMap head [ rest ])) ++ (drop 1 rest) }
+    case Array.get i grid.cells of
+        Just a ->
+            { grid | cells = Array.set i (f a) grid.cells }
+
+        Nothing ->
+            grid

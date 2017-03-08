@@ -25,7 +25,7 @@ type Msg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    every ((toFloat (1000 - model.speed)) * millisecond) Tick
+    every ((toFloat (1001 - model.speed)) * millisecond) Tick
 
 
 randomize grid =
@@ -82,7 +82,7 @@ view model =
                             [ type_ "range"
                             , onInput Size
                             , Attr.min "3"
-                            , Attr.max "50"
+                            , Attr.max "75"
                             , value (toString (Grid.width model.grid))
                             ]
                             []
@@ -118,7 +118,7 @@ nextCell alive liveNeighborCount =
 
 nextGrid : Grid Bool -> Grid Bool
 nextGrid grid =
-    { grid | cells = List.map (\( cell, neighbors ) -> nextCell cell (List.length (List.filter identity neighbors))) (neighbors grid) }
+    Grid.square <| List.map (\( cell, neighbors ) -> nextCell cell (List.length (List.filter identity neighbors))) (neighbors grid)
 
 
 update msg model =
