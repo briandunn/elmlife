@@ -29,7 +29,7 @@ subscriptions model =
         (model.speed
             |> (*) 250
             |> abs
-            |> (-) 1000
+            |> (-) 1001
             |> toFloat
             |> (*) millisecond
         )
