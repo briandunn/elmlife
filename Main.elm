@@ -171,7 +171,7 @@ update msg model =
                 ( { model | grid = (Grid.update i not model.grid), play = False }, Cmd.none )
 
             Clear ->
-                ( { model | grid = Grid.fill False model.grid, frames = [] }, Cmd.none )
+                ( { model | grid = Grid.fill False model.grid, frames = [], play = False }, Cmd.none )
 
             Speed value ->
                 stringToInt value (\int -> { model | speed = int })

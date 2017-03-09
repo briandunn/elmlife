@@ -1,7 +1,7 @@
 module Grid exposing (Grid, rows, neighbors, at, Address, empty, update, fill, height, cellCount, square, new, resize, width, map)
 
 import Array exposing (Array, toList, fromList, get)
-import List exposing (take, drop, indexedMap, filterMap, concatMap, filter, length, foldl)
+import List exposing (indexedMap, filterMap, concatMap, filter, length, foldl)
 
 
 type alias Grid a =
@@ -62,20 +62,11 @@ resize width default grid =
 
 rows : Grid a -> List (List a)
 rows grid =
-    groupsOf grid.width <| toList grid.cells
-
-
-groupsOf size list =
-    let
-        rest =
-            drop size list
-    in
-        (take size list)
-            :: (if rest == [] then
-                    []
-                else
-                    (groupsOf size rest)
-               )
+    toList <|
+        Array.initialize (height grid)
+            (\i ->
+                toList <| Array.slice (i * grid.width) ((i * grid.width) + grid.width) grid.cells
+            )
 
 
 neighbors : Grid a -> List ( a, List a )
