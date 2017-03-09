@@ -9,7 +9,7 @@ import Random
 
 
 type alias Model =
-    { play : Bool, grid : Grid Bool, speed : Int }
+    { play : Bool, grid : Grid Bool, speed : Int, frames : List (Grid Bool) }
 
 
 type Msg
@@ -25,7 +25,15 @@ type Msg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    every ((toFloat (1001 - model.speed)) * millisecond) Tick
+    every
+        (model.speed
+            |> (*) 250
+            |> abs
+            |> (-) 1000
+            |> toFloat
+            |> (*) millisecond
+        )
+        Tick
 
 
 randomize grid =
@@ -38,7 +46,7 @@ init =
         grid =
             Grid.new 30 False
     in
-        ( { play = True, grid = grid, speed = 500 }, (randomize grid) )
+        ( { play = True, grid = grid, speed = 1, frames = [] }, (randomize grid) )
 
 
 view model =
@@ -67,9 +75,8 @@ view model =
                         [ input
                             [ type_ "range"
                             , onInput Speed
-                            , Attr.min "0"
-                            , Attr.max "1000"
-                            , step "100"
+                            , Attr.min "-4"
+                            , Attr.max "4"
                             , value (toString model.speed)
                             ]
                             []
@@ -121,6 +128,27 @@ nextGrid grid =
     Grid.square <| List.map (\( cell, neighbors ) -> nextCell cell (List.length (List.filter identity neighbors))) (neighbors grid)
 
 
+tick : Model -> Model
+tick model =
+    if model.play then
+        if model.speed > 0 then
+            let
+                next =
+                    nextGrid model.grid
+            in
+                if next /= model.grid then
+                    { model | grid = next, frames = model.grid :: model.frames }
+                else
+                    { model | play = False }
+        else
+            { model
+                | grid = Maybe.withDefault model.grid (List.head model.frames)
+                , frames = Maybe.withDefault [] (List.tail model.frames)
+            }
+    else
+        model
+
+
 update msg model =
     let
         stringToInt =
@@ -128,12 +156,7 @@ update msg model =
     in
         case msg of
             Tick time ->
-                ( if model.play then
-                    { model | grid = (nextGrid model.grid) }
-                  else
-                    model
-                , Cmd.none
-                )
+                ( tick model, Cmd.none )
 
             RandomCells cells ->
                 ( { model | grid = Grid.square cells }, Cmd.none )
@@ -148,7 +171,7 @@ update msg model =
                 ( { model | grid = (Grid.update i not model.grid), play = False }, Cmd.none )
 
             Clear ->
-                ( { model | grid = Grid.fill False model.grid }, Cmd.none )
+                ( { model | grid = Grid.fill False model.grid, frames = [] }, Cmd.none )
 
             Speed value ->
                 stringToInt value (\int -> { model | speed = int })
